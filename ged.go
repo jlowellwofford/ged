@@ -32,8 +32,8 @@ func run(cmd string) (e error) {
 	if ctx.addrs, ctx.cmdOffset, e = buffer.ResolveAddrs(cmd); e != nil {
 		return
 	}
-	if len(cmd)-1 <= ctx.cmdOffset {
-		// no command, default ot print
+	if len(cmd) <= ctx.cmdOffset {
+		// no command, default to print
 		ctx.cmd += "p"
 	}
 	if exe, ok := cmds[ctx.cmd[ctx.cmdOffset]]; ok {
@@ -55,10 +55,11 @@ func main() {
 	}
 	flag.Parse()
 	args := flag.Args()
-	if len(args) > 1 { // we only except one additional argument
+	if len(args) > 1 { // we only accept one additional argument
 		flag.Usage()
 		os.Exit(1)
 	}
+	buffer = NewFileBuffer(nil)
 	if len(args) == 1 { // we were given a file name
 		state.fileName = args[0]
 		// try to read in the file
