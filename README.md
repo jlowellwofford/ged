@@ -22,6 +22,7 @@ The following has been implemented:
   - e
   - E
   - f
+  - =
 
 The following has *not* yet been implemented:
 - Unimplemented commands:
@@ -42,4 +43,3 @@ The following has *not* yet been implemented:
   - z
   - !
   - \#
-  - =

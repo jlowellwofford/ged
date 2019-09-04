@@ -37,6 +37,7 @@ var cmds = map[byte]Command{
 	'e': cmdEdit,
 	'E': cmdEdit,
 	'f': cmdFile,
+	'=': cmdLine,
 }
 
 //////////////////////
@@ -237,5 +238,13 @@ func cmdFile(ctx *Context) (e error) {
 		return
 	}
 	fmt.Println(state.fileName)
+	return
+}
+
+func cmdLine(ctx *Context) (e error) {
+	addr, e := buffer.AddrValue(ctx.addrs)
+	if e == nil {
+		fmt.Println(addr + 1)
+	}
 	return
 }
