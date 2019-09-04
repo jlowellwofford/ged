@@ -36,6 +36,7 @@ var cmds = map[byte]Command{
 	'k': cmdMark,
 	'e': cmdEdit,
 	'E': cmdEdit,
+	'f': cmdFile,
 }
 
 //////////////////////
@@ -226,5 +227,15 @@ func cmdEdit(ctx *Context) (e error) {
 		fmt.Fprintln(os.Stderr, e)
 		os.Exit(1)
 	}
+	return
+}
+
+func cmdFile(ctx *Context) (e error) {
+	newFile := ctx.cmd[wsOffset(ctx.cmd[ctx.cmdOffset+1:])+1:]
+	if len(newFile) > 0 {
+		state.fileName = newFile
+		return
+	}
+	fmt.Println(state.fileName)
 	return
 }

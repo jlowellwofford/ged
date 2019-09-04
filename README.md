@@ -21,10 +21,10 @@ The following has been implemented:
   - k
   - e
   - E
+  - f
 
 The following has *not* yet been implemented:
 - Unimplemented commands:
-  - f
   - g
   - G
   - j
