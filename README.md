@@ -26,12 +26,12 @@ The following has been implemented:
   - \#
   - l
   - r
+  - j
 
 The following has *not* yet been implemented:
 - Unimplemented commands:
   - g
   - G
-  - j
   - m
   - P
   - s

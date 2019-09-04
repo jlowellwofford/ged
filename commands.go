@@ -40,6 +40,7 @@ var cmds = map[byte]Command{
 	'r': cmdEdit,
 	'f': cmdFile,
 	'=': cmdLine,
+	'j': cmdJoin,
 	'#': func(*Context) (e error) { return },
 }
 
@@ -271,5 +272,26 @@ func cmdLine(ctx *Context) (e error) {
 	if e == nil {
 		fmt.Println(addr + 1)
 	}
+	return
+}
+
+func cmdJoin(ctx *Context) (e error) {
+	var r [2]int
+	if r, e = buffer.AddrRangeOrLine(ctx.addrs); e != nil {
+		return
+	}
+	// Technically only a range works, but a line isn't an error
+	if r[0] == r[1] {
+		return
+	}
+
+	joined := ""
+	for l := r[0]; l <= r[1]; l++ {
+		joined += buffer.GetMust(l, false)
+	}
+	if e = buffer.Delete(r); e != nil {
+		return
+	}
+	e = buffer.Insert(r[0], []string{joined})
 	return
 }
