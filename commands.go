@@ -37,6 +37,7 @@ var cmds = map[byte]Command{
 	'k': cmdMark,
 	'e': cmdEdit,
 	'E': cmdEdit,
+	'r': cmdEdit,
 	'f': cmdFile,
 	'=': cmdLine,
 	'#': func(*Context) (e error) { return },
@@ -209,30 +210,44 @@ func cmdMark(ctx *Context) (e error) {
 }
 
 func cmdEdit(ctx *Context) (e error) {
+	var addr int
+	addr, e = buffer.AddrValue(ctx.addrs)
+	if e != nil {
+		return
+	}
 	// cmd or filename?
+	cmd := ctx.cmd[ctx.cmdOffset]
 	force := false
-	if ctx.cmd[ctx.cmdOffset] == 'E' {
+	if cmd == 'E' || cmd == 'r' {
 		force = true
 	} // else == 'e'
 	if buffer.Dirty() && !force {
 		return fmt.Errorf("warning: file modified")
 	}
-	filename := ctx.cmd[wsOffset(ctx.cmd[ctx.cmdOffset+1:])+1:]
+	filename := ctx.cmd[ctx.cmdOffset+1:]
+	filename = filename[wsOffset(filename):]
 	if filename[0] == '!' { // command, not filename
 		// TODO
 		return fmt.Errorf("command execution is not yet supported")
 	} // filename
-	oldFilename := state.fileName
-	state.fileName = filename
+	if len(filename) == 0 {
+		filename = state.fileName
+	}
 	// try to read in the file
-	if _, e = os.Stat(state.fileName); os.IsNotExist(e) && !*fSuppress {
-		state.fileName = oldFilename
+	if _, e = os.Stat(filename); os.IsNotExist(e) && !*fSuppress {
 		return fmt.Errorf("%s: No such file or directory", filename)
 		// this is not fatal, we just start with an empty buffer
 	}
-	if buffer, e = FileToBuffer(state.fileName); e != nil {
-		fmt.Fprintln(os.Stderr, e)
-		os.Exit(1)
+	if cmd != 'r' {
+		if buffer, e = FileToBuffer(filename); e != nil {
+			fmt.Fprintln(os.Stderr, e)
+			os.Exit(1)
+		}
+	} else {
+		e = buffer.ReadFile(addr, filename)
+		if len(state.fileName) == 0 {
+			state.fileName = filename
+		}
 	}
 	if !*fSuppress {
 		fmt.Println(buffer.Size())
@@ -241,7 +256,8 @@ func cmdEdit(ctx *Context) (e error) {
 }
 
 func cmdFile(ctx *Context) (e error) {
-	newFile := ctx.cmd[wsOffset(ctx.cmd[ctx.cmdOffset+1:])+1:]
+	newFile := ctx.cmd[ctx.cmdOffset:]
+	newFile = newFile[wsOffset(newFile):]
 	if len(newFile) > 0 {
 		state.fileName = newFile
 		return

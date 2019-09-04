@@ -147,19 +147,11 @@ func (f *FileBuffer) Clean() {
 
 // FileToBuffer reads a file and creates a new FileBuffer from it
 func FileToBuffer(file string) (fb *FileBuffer, e error) {
-	b := []string{}
-	f, e := os.Open(file)
-	if e != nil {
-		e = fmt.Errorf("could not read file: %v", e)
-		return nil, nil
+	fb = NewFileBuffer(nil)
+	e = fb.ReadFile(0, file)
+	if e == nil {
+		fb.dirty = false
 	}
-	defer f.Close()
-
-	s := bufio.NewScanner(f)
-	for s.Scan() {
-		b = append(b, s.Text())
-	}
-	fb = NewFileBuffer(b)
 	return
 }
 
@@ -193,5 +185,23 @@ func (f *FileBuffer) Size() (s int) {
 	for _, i := range f.file {
 		s += len(f.buffer[i])
 	}
+	return
+}
+
+// ReadFile reads in a file and inserts it at the current line address
+func (f *FileBuffer) ReadFile(line int, file string) (e error) {
+	var fh *os.File
+	b := []string{}
+	if fh, e = os.Open(file); e != nil {
+		e = fmt.Errorf("could not read file: %v", e)
+		return
+	}
+	defer fh.Close()
+
+	s := bufio.NewScanner(fh)
+	for s.Scan() {
+		b = append(b, s.Text())
+	}
+	e = f.Insert(line, b)
 	return
 }

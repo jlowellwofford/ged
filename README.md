@@ -25,6 +25,7 @@ The following has been implemented:
   - =
   - \#
   - l
+  - r
 
 The following has *not* yet been implemented:
 - Unimplemented commands:
@@ -33,7 +34,6 @@ The following has *not* yet been implemented:
   - j
   - m
   - P
-  - r
   - s
   - t
   - u
