@@ -140,7 +140,7 @@ func cmdWrite(ctx *Context) (e error) {
 	var r [2]int
 	if ctx.cmdOffset == 0 {
 		r[0] = 0
-		r[1] = buffer.Len()
+		r[1] = buffer.Len() - 1
 	} else {
 		if r, e = buffer.AddrRange(ctx.addrs); e != nil {
 			return
