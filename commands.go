@@ -38,6 +38,7 @@ var cmds = map[byte]Command{
 	'E': cmdEdit,
 	'f': cmdFile,
 	'=': cmdLine,
+	'#': func(*Context) (e error) { return },
 }
 
 //////////////////////
