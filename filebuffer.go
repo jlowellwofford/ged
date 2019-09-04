@@ -42,7 +42,7 @@ var ErrINV = fmt.Errorf("invalid address")
 
 // OOB checks if a line is out of bounds
 func (f *FileBuffer) OOB(l int) bool {
-	if l < 0 || l >= len(f.file) {
+	if l < 0 || l >= f.Len() {
 		return true
 	}
 	return false
@@ -98,7 +98,7 @@ func (f *FileBuffer) Delete(r [2]int) (e error) {
 
 // Insert adds nlines to buffer and inserts them at line
 func (f *FileBuffer) Insert(line int, nlines []string) (e error) {
-	if f.OOB(line) {
+	if line != f.Len() && f.OOB(line) { // if line == f.Len() we append to the end
 		return ErrOOB
 	}
 	if len(nlines) == 0 {
