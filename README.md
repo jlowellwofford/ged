@@ -19,11 +19,11 @@ The following has been implemented:
   - w
   - W
   - k
+  - e
+  - E
 
 The following has *not* yet been implemented:
 - Unimplemented commands:
-  - e
-  - E
   - f
   - g
   - G

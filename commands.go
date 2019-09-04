@@ -34,6 +34,8 @@ var cmds = map[byte]Command{
 	'w': cmdWrite,
 	'W': cmdWrite,
 	'k': cmdMark,
+	'e': cmdEdit,
+	'E': cmdEdit,
 }
 
 //////////////////////
@@ -195,5 +197,34 @@ func cmdMark(ctx *Context) (e error) {
 		return
 	}
 	e = buffer.SetMark(c, l)
+	return
+}
+
+func cmdEdit(ctx *Context) (e error) {
+	// cmd or filename?
+	force := false
+	if ctx.cmd[ctx.cmdOffset] == 'E' {
+		force = true
+	} // else == 'e'
+	if buffer.Dirty() && !force {
+		return fmt.Errorf("warning: file modified")
+	}
+	filename := ctx.cmd[wsOffset(ctx.cmd[ctx.cmdOffset+1:])+1:]
+	if filename[0] == '!' { // command, not filename
+		// TODO
+		return fmt.Errorf("command execution is not yet supported")
+	} // filename
+	oldFilename := state.fileName
+	state.fileName = filename
+	// try to read in the file
+	if _, e = os.Stat(state.fileName); os.IsNotExist(e) && !*fSuppress {
+		state.fileName = oldFilename
+		return fmt.Errorf("%s: No such file or directory", filename)
+		// this is not fatal, we just start with an empty buffer
+	}
+	if buffer, e = FileToBuffer(state.fileName); e != nil {
+		fmt.Fprintln(os.Stderr, e)
+		os.Exit(1)
+	}
 	return
 }

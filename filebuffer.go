@@ -163,6 +163,7 @@ func FileToBuffer(file string) (fb *FileBuffer, e error) {
 	return
 }
 
+// SetMark sets a mark (by byte name) in the FileBuffer for later use
 func (f *FileBuffer) SetMark(c byte, l int) (e error) {
 	if f.OOB(l) {
 		e = ErrOOB
@@ -172,6 +173,7 @@ func (f *FileBuffer) SetMark(c byte, l int) (e error) {
 	return
 }
 
+// GetMark gets a mark from the FileBuffer (by byte name)
 func (f *FileBuffer) GetMark(c byte) (l int, e error) {
 	bl, ok := f.marks[c]
 	if !ok {
