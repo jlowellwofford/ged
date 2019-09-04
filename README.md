@@ -27,12 +27,12 @@ The following has been implemented:
   - l
   - r
   - j
+  - m
 
 The following has *not* yet been implemented:
 - Unimplemented commands:
   - g
   - G
-  - m
   - P
   - s
   - t

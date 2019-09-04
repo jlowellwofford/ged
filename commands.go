@@ -41,6 +41,7 @@ var cmds = map[byte]Command{
 	'f': cmdFile,
 	'=': cmdLine,
 	'j': cmdJoin,
+	'm': cmdMove,
 	'#': func(*Context) (e error) { return },
 }
 
@@ -293,5 +294,50 @@ func cmdJoin(ctx *Context) (e error) {
 		return
 	}
 	e = buffer.Insert(r[0], []string{joined})
+	return
+}
+
+func cmdMove(ctx *Context) (e error) {
+	var r [2]int
+	var dest int
+	var lines []string
+	if r, e = buffer.AddrRangeOrLine(ctx.addrs); e != nil {
+		return
+	}
+	// must parse the destination
+	destStr := ctx.cmd[ctx.cmdOffset+1:]
+	var nctx Context
+	if nctx.addrs, nctx.cmdOffset, e = buffer.ResolveAddrs(destStr); e != nil {
+		return
+	}
+	// this is a bit hacky, but we're supposed to allow 0
+	append := 1
+	last := len(nctx.addrs) - 1
+	if nctx.addrs[last] == -1 {
+		nctx.addrs[last] = 0
+		append = 0
+	}
+	if dest, e = buffer.AddrValue(nctx.addrs); e != nil {
+		return
+	}
+
+	if lines, e = buffer.Get(r); e != nil {
+		return
+	}
+	delt := r[1] - r[0] + 1
+	if dest < r[0] {
+		r[0] += delt
+		r[1] += delt
+	} else if dest > r[1] {
+		//NOP
+	} else {
+		return fmt.Errorf("cannot move lines to within their own range")
+	}
+
+	// Should we throw an error if there's trailing stuff?
+	if e = buffer.Insert(dest+append, lines); e != nil {
+		return
+	}
+	e = buffer.Delete(r)
 	return
 }
