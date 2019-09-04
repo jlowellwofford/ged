@@ -187,3 +187,11 @@ func (f *FileBuffer) GetMark(c byte) (l int, e error) {
 	}
 	return -1, fmt.Errorf("mark was cleared: %c", c)
 }
+
+// Size return the size (in bytes) of the current file buffer
+func (f *FileBuffer) Size() (s int) {
+	for _, i := range f.file {
+		s += len(f.buffer[i])
+	}
+	return
+}

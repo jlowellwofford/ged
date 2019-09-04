@@ -71,6 +71,9 @@ func main() {
 				fmt.Fprintln(os.Stderr, e)
 				os.Exit(1)
 			}
+			if !*fSuppress {
+				fmt.Println(buffer.Size())
+			}
 		}
 	}
 	inScan := bufio.NewScanner(os.Stdin)

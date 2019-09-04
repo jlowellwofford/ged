@@ -229,6 +229,9 @@ func cmdEdit(ctx *Context) (e error) {
 		fmt.Fprintln(os.Stderr, e)
 		os.Exit(1)
 	}
+	if !*fSuppress {
+		fmt.Println(buffer.Size())
+	}
 	return
 }
 
