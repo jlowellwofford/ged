@@ -24,13 +24,13 @@ The following has been implemented:
   - f
   - =
   - \#
+  - l
 
 The following has *not* yet been implemented:
 - Unimplemented commands:
   - g
   - G
   - j
-  - l
   - m
   - P
   - r

@@ -24,6 +24,7 @@ var cmds = map[byte]Command{
 	'q': cmdQuit,
 	'Q': cmdQuit,
 	'd': cmdDelete,
+	'l': cmdPrint,
 	'p': cmdPrint,
 	'n': cmdPrint,
 	'h': cmdErr,
@@ -71,7 +72,11 @@ func cmdPrint(ctx *Context) (e error) {
 		if ctx.cmd[ctx.cmdOffset] == 'n' {
 			fmt.Printf("%d\t", l+1)
 		}
-		fmt.Printf("%s\n", buffer.GetMust(l, true))
+		line := buffer.GetMust(l, true)
+		if ctx.cmd[ctx.cmdOffset] == 'l' {
+			line += "$" // TODO: the man pages describes more escaping, but it's not clear what GNU ed actually does.
+		}
+		fmt.Printf("%s\n", line)
 	}
 	return
 }
