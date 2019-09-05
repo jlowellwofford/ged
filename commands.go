@@ -42,6 +42,9 @@ var cmds = map[byte]Command{
 	'=': cmdLine,
 	'j': cmdJoin,
 	'm': cmdMove,
+	't': cmdMove,
+	'y': cmdCopy,
+	'x': cmdPaste,
 	'#': func(*Context) (e error) { return },
 }
 
@@ -301,6 +304,7 @@ func cmdMove(ctx *Context) (e error) {
 	var r [2]int
 	var dest int
 	var lines []string
+	cmd := ctx.cmd[ctx.cmdOffset]
 	if r, e = buffer.AddrRangeOrLine(ctx.addrs); e != nil {
 		return
 	}
@@ -338,6 +342,31 @@ func cmdMove(ctx *Context) (e error) {
 	if e = buffer.Insert(dest+append, lines); e != nil {
 		return
 	}
-	e = buffer.Delete(r)
+	if cmd == 'm' {
+		e = buffer.Delete(r)
+	} // else 't'
 	return
+}
+
+func cmdCopy(ctx *Context) (e error) {
+	var r [2]int
+	if r, e = buffer.AddrRangeOrLine(ctx.addrs); e != nil {
+		return
+	}
+	return buffer.Copy(r)
+}
+
+func cmdPaste(ctx *Context) (e error) {
+	var addr int
+	// this is a bit hacky, but we're supposed to allow 0
+	append := 1
+	last := len(ctx.addrs) - 1
+	if ctx.addrs[last] == -1 {
+		ctx.addrs[last] = 0
+		append = 0
+	}
+	if addr, e = buffer.AddrValue(ctx.addrs); e != nil {
+		return
+	}
+	return buffer.Paste(addr + append)
 }

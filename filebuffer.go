@@ -12,6 +12,7 @@ import (
 // It keeps a map of known lines to the current buffer.
 // Note: FileBuffer is 0-addressed lines, so off-by-one from what `ed` expects.
 type FileBuffer struct {
+	cbuf   []string // cut buffer
 	buffer []string // all lines we know about, they never get delited
 	file   []int    // sequence of buffer lines
 	dirty  bool     // tracks if the file has been modifed
@@ -71,6 +72,22 @@ func (f *FileBuffer) Get(r [2]int) (lines []string, e error) {
 	return
 }
 
+// Copy lines into the cut buffer
+func (f *FileBuffer) Copy(r [2]int) (e error) {
+	var lines []string
+	if lines, e = f.Get(r); e != nil {
+		return
+	}
+	f.cbuf = lines
+	return
+}
+
+// Paste lines from cut buffer insert at line
+func (f *FileBuffer) Paste(line int) (e error) {
+	e = f.Insert(line, f.cbuf)
+	return
+}
+
 // Delete unmaps lines from the file
 func (f *FileBuffer) Delete(r [2]int) (e error) {
 	blines := []int{}
@@ -80,6 +97,7 @@ func (f *FileBuffer) Delete(r [2]int) (e error) {
 		}
 		blines = append(blines, f.file[l])
 	}
+	f.cbuf, _ = f.Get(r) // this shouldn't fail here, if it does we've got a bigger problem
 	for _, b := range blines {
 		for i, l := range f.file {
 			if l == b {

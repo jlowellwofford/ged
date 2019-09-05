@@ -28,6 +28,9 @@ The following has been implemented:
   - r
   - j
   - m
+  - t
+  - y
+  - x
 
 The following has *not* yet been implemented:
 - Unimplemented commands:
@@ -35,11 +38,8 @@ The following has *not* yet been implemented:
   - G
   - P
   - s
-  - t
   - u
   - v
   - V
-  - x
-  - y
   - z
   - !
