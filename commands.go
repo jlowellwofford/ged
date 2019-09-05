@@ -45,6 +45,7 @@ var cmds = map[byte]Command{
 	't': cmdMove,
 	'y': cmdCopy,
 	'x': cmdPaste,
+	'P': cmdPrompt,
 	'#': func(*Context) (e error) { return },
 }
 
@@ -369,4 +370,13 @@ func cmdPaste(ctx *Context) (e error) {
 		return
 	}
 	return buffer.Paste(addr + append)
+}
+
+func cmdPrompt(ctx *Context) (e error) {
+	if state.prompt {
+		state.prompt = false
+	} else if len(*fPrompt) > 0 {
+		state.prompt = true
+	}
+	return
 }

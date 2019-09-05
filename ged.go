@@ -22,6 +22,7 @@ var state struct {
 	fileName string // current filename
 	lastErr  error
 	printErr bool
+	prompt   bool
 }
 
 // Parse input and run command
@@ -54,6 +55,9 @@ func main() {
 		flag.PrintDefaults()
 	}
 	flag.Parse()
+	if len(*fPrompt) > 0 {
+		state.prompt = true
+	}
 	args := flag.Args()
 	if len(args) > 1 { // we only accept one additional argument
 		flag.Usage()
@@ -77,6 +81,9 @@ func main() {
 		}
 	}
 	inScan := bufio.NewScanner(os.Stdin)
+	if state.prompt {
+		fmt.Printf("%s", *fPrompt)
+	}
 	for inScan.Scan() {
 		cmd := inScan.Text()
 		e = run(cmd)
@@ -87,6 +94,9 @@ func main() {
 			} else {
 				fmt.Println("?")
 			}
+		}
+		if state.prompt {
+			fmt.Printf("%s", *fPrompt)
 		}
 	}
 	if inScan.Err() != nil {
