@@ -23,6 +23,7 @@ var state struct {
 	lastErr  error
 	printErr bool
 	prompt   bool
+	winSize  int
 }
 
 // Parse input and run command
@@ -82,6 +83,7 @@ func main() {
 			}
 		}
 	}
+	state.winSize = 22 // we don't actually support getting the real window size
 	inScan := bufio.NewScanner(os.Stdin)
 	if state.prompt {
 		fmt.Printf("%s", *fPrompt)

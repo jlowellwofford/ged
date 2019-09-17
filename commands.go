@@ -51,6 +51,7 @@ var cmds = map[byte]Command{
 	's': cmdSub,
 	'u': cmdUndo,
 	'D': cmdDump, // var dump the buffer for debug
+	'z': cmdScroll,
 	'#': func(*Context) (e error) { return },
 }
 
@@ -89,6 +90,34 @@ func cmdPrint(ctx *Context) (e error) {
 			line += "$" // TODO: the man pages describes more escaping, but it's not clear what GNU ed actually does.
 		}
 		fmt.Printf("%s\n", line)
+	}
+	return
+}
+
+func cmdScroll(ctx *Context) (e error) {
+	start, e := buffer.AddrValue(ctx.addrs)
+	if e != nil {
+		return
+	}
+	// parse win size (if there)
+	winStr := ctx.cmd[ctx.cmdOffset+1:]
+	if len(winStr) > 0 {
+		var win int
+		if win, e = strconv.Atoi(winStr); e != nil {
+			return fmt.Errorf("invalid window size: %s", winStr)
+		}
+		state.winSize = win
+	}
+	end := start + state.winSize - 1
+	if end > buffer.Len()-1 {
+		end = buffer.Len() - 1
+	}
+	var ls []string
+	if ls, e = buffer.Get([2]int{start, end}); e != nil {
+		return
+	}
+	for _, l := range ls {
+		fmt.Println(l)
 	}
 	return
 }

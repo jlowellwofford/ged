@@ -34,6 +34,7 @@ The following has been implemented:
   - P
   - s
   - u
+  - z
 
 The following has *not* yet been implemented:
 - Unimplemented commands:
@@ -41,5 +42,4 @@ The following has *not* yet been implemented:
   - G
   - v
   - V
-  - z
   - !
