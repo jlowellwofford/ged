@@ -32,14 +32,17 @@ The following has been implemented:
   - y
   - x
   - P
+  - s
 
 The following has *not* yet been implemented:
 - Unimplemented commands:
   - g
   - G
-  - s
   - u
   - v
   - V
   - z
   - !
+
+  Other known issues:
+  - with the 's' command, backrefs cannot currently be escaped, i.e. \\\\1 is will be \\\<backref #1\>

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
+	"strings"
 )
 
 // A Context is passed to an invoked command
@@ -46,6 +48,7 @@ var cmds = map[byte]Command{
 	'y': cmdCopy,
 	'x': cmdPaste,
 	'P': cmdPrompt,
+	's': cmdSub,
 	'#': func(*Context) (e error) { return },
 }
 
@@ -378,5 +381,96 @@ func cmdPrompt(ctx *Context) (e error) {
 	} else if len(*fPrompt) > 0 {
 		state.prompt = true
 	}
+	return
+}
+
+var rxSanitize = regexp.MustCompile("\\\\.")
+var rxBackref = regexp.MustCompile("\\\\([0-9]+)")
+
+// FIXME: this is probably more convoluted than it needs to be
+func cmdSub(ctx *Context) (e error) {
+	cmd := ctx.cmd[ctx.cmdOffset+1:]
+	del := cmd[0]
+	switch del {
+	case ' ':
+		fallthrough
+	case '\n':
+		fallthrough
+	case 'm':
+		fallthrough
+	case 'g':
+		return fmt.Errorf("Invalid pattern delimiter")
+	}
+	// we replace escapes and their escaped characters with spaces to keep indexing
+	sane := rxSanitize.ReplaceAllString(cmd, "  ")
+
+	idx := [2]int{-1, -1}
+	idx[0] = strings.Index(sane[1:], string(del)) + 1
+	if idx[0] != -1 {
+		idx[1] = strings.Index(sane[idx[0]+1:], string(del)) + idx[0] + 1
+	}
+	if idx[1] == -1 {
+		idx[1] = len(cmd) - 1
+	}
+
+	mat := cmd[1:idx[0]]
+	rep := cmd[idx[0]+1 : idx[1]]
+	// TODO - backrefs can't be escaped
+	refs := rxBackref.FindAllStringSubmatchIndex(rep, -1)
+
+	var r [2]int
+	if r, e = buffer.AddrRangeOrLine(ctx.addrs); e != nil {
+		return
+	}
+
+	var rx *regexp.Regexp
+	if rx, e = regexp.Compile(mat); e != nil {
+		return
+	}
+
+	last := ""
+	nMatch := 0
+	b, _ := buffer.Get(r)
+	// we have to do things a bit manually because we we only have ReplaceAll, and we don't necessarily want that
+	for ln, l := range b {
+		matches := rx.FindAllStringSubmatchIndex(l, -1)
+		if !(len(matches) > 0) {
+			continue // skip the rest if we don't have matches
+		}
+		// we have matches, deal with them
+		fLin := ""
+		oLin := 0
+		for _, m := range matches {
+			nMatch++
+			//fRep := rep
+			//offset := 0
+
+			// Fill backrefs
+			oRep := 0
+			fRep := ""
+			for _, r := range refs {
+				i, _ := strconv.Atoi(rep[r[2]:r[3]])
+				if i > len(m)/2-1 { // not enough submatches for backref
+					return fmt.Errorf("invalid backref")
+				}
+				fRep += rep[oRep:r[0]]
+				fRep += l[m[2*i]:m[2*i+1]]
+				oRep = r[1]
+			}
+			fRep += rep[oRep:]
+
+			fLin += l[oLin:m[0]]
+			fLin += fRep
+			oLin = m[1]
+		}
+		fLin += l[oLin:]
+		buffer.Delete([2]int{ln, ln})
+		buffer.Insert(ln, []string{fLin})
+		last = fLin
+	}
+	if nMatch == 0 {
+		e = fmt.Errorf("no match")
+	}
+	fmt.Println(last)
 	return
 }
