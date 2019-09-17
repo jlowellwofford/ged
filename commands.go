@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
@@ -52,6 +53,7 @@ var cmds = map[byte]Command{
 	'u': cmdUndo,
 	'D': cmdDump, // var dump the buffer for debug
 	'z': cmdScroll,
+	'!': cmdCommand,
 	'#': func(*Context) (e error) { return },
 }
 
@@ -514,5 +516,15 @@ func cmdUndo(ctx *Context) (e error) {
 
 func cmdDump(ctx *Context) (e error) {
 	fmt.Printf("%v\n", buffer)
+	return
+}
+
+func cmdCommand(ctx *Context) (e error) {
+	cmdStr := ctx.cmd[ctx.cmdOffset+1:]
+	cmd := exec.Command(shellpath, shellopts, cmdStr)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Run()
 	return
 }
