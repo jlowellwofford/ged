@@ -35,6 +35,7 @@ The following has been implemented:
   - s
   - u
   - z
+  - !
 
 The following has *not* yet been implemented:
 - Unimplemented commands:
@@ -42,4 +43,8 @@ The following has *not* yet been implemented:
   - G
   - v
   - V
-  - !
+
+- Commands that should interpret ! but don't:
+  - e
+  - r
+  - w

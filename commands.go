@@ -519,12 +519,26 @@ func cmdDump(ctx *Context) (e error) {
 	return
 }
 
+var rxCmdSub = regexp.MustCompile("%")
+
 func cmdCommand(ctx *Context) (e error) {
 	cmdStr := ctx.cmd[ctx.cmdOffset+1:]
-	cmd := exec.Command(shellpath, shellopts, cmdStr)
+	cmdStrSane := rxSanitize.ReplaceAllString(cmdStr, "..")
+	idx := rxCmdSub.FindAllStringIndex(cmdStrSane, -1)
+	fCmd := ""
+	oCmd := 0
+	for _, m := range idx {
+		fCmd += cmdStr[oCmd:m[0]]
+		fCmd += state.fileName
+		oCmd = m[1]
+	}
+	fCmd += cmdStr[oCmd:]
+
+	cmd := exec.Command(shellpath, shellopts, fCmd)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Run()
+	fmt.Println("!")
 	return
 }
