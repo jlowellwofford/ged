@@ -385,6 +385,7 @@ func cmdPrompt(ctx *Context) (e error) {
 }
 
 var rxSanitize = regexp.MustCompile("\\\\.")
+var rxBackrefSanitize = regexp.MustCompile("\\\\\\\\")
 var rxBackref = regexp.MustCompile("\\\\([0-9]+)")
 
 // FIXME: this is probably more convoluted than it needs to be
@@ -415,8 +416,8 @@ func cmdSub(ctx *Context) (e error) {
 
 	mat := cmd[1:idx[0]]
 	rep := cmd[idx[0]+1 : idx[1]]
-	// TODO - backrefs can't be escaped
-	refs := rxBackref.FindAllStringSubmatchIndex(rep, -1)
+	repSane := rxBackrefSanitize.ReplaceAllString(rep, "  ")
+	refs := rxBackref.FindAllStringSubmatchIndex(repSane, -1)
 
 	var r [2]int
 	if r, e = buffer.AddrRangeOrLine(ctx.addrs); e != nil {

@@ -43,6 +43,3 @@ The following has *not* yet been implemented:
   - V
   - z
   - !
-
-  Other known issues:
-  - with the 's' command, backrefs cannot currently be escaped, i.e. \\\\1 is will be \\\<backref #1\>
