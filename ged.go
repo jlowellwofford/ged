@@ -11,7 +11,7 @@ import (
 // flags
 var (
 	fSuppress = flag.Bool("s", false, "suppress counts")
-	fPrompt   = flag.String("p", "*", "specify a command prompt")
+	fPrompt   = flag.String("p", "", "specify a command prompt")
 )
 
 // current FileBuffer
@@ -38,9 +38,11 @@ func run(cmd string) (e error) {
 		ctx.cmd += "p"
 	}
 	if exe, ok := cmds[ctx.cmd[ctx.cmdOffset]]; ok {
+		buffer.Start()
 		if e = exe(ctx); e != nil {
 			return
 		}
+		buffer.End()
 	} else {
 		return fmt.Errorf("invalid command: %v", cmd[ctx.cmdOffset])
 	}

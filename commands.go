@@ -49,6 +49,8 @@ var cmds = map[byte]Command{
 	'x': cmdPaste,
 	'P': cmdPrompt,
 	's': cmdSub,
+	'u': cmdUndo,
+	'D': cmdDump, // var dump the buffer for debug
 	'#': func(*Context) (e error) { return },
 }
 
@@ -473,5 +475,15 @@ func cmdSub(ctx *Context) (e error) {
 		e = fmt.Errorf("no match")
 	}
 	fmt.Println(last)
+	return
+}
+
+func cmdUndo(ctx *Context) (e error) {
+	buffer.Rewind()
+	return
+}
+
+func cmdDump(ctx *Context) (e error) {
+	fmt.Printf("%v\n", buffer)
 	return
 }

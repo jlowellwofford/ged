@@ -12,12 +12,19 @@ import (
 // It keeps a map of known lines to the current buffer.
 // Note: FileBuffer is 0-addressed lines, so off-by-one from what `ed` expects.
 type FileBuffer struct {
-	cbuf   []string // cut buffer
-	buffer []string // all lines we know about, they never get delited
-	file   []int    // sequence of buffer lines
-	dirty  bool     // tracks if the file has been modifed
-	addr   int      // current file address
-	marks  map[byte]int
+	cbuf      []string // cut buffer
+	buffer    []string // all lines we know about, they never get delited
+	file      []int    // sequence of buffer lines
+	lastFile  []int    // used for undo capability
+	tmpFile   []int    // used for undo capability
+	dirty     bool     // tracks if the file has been modifed
+	lastDirty bool     // used for undo capability
+	tmpDirty  bool     // used for undo capability
+	mod       bool     // mod is like dirty, but can be reset for transactions
+	addr      int      // current file address
+	lastAddr  int      // last address (for undo)
+	tmpAddr   int      // last address (for undo)
+	marks     map[byte]int
 }
 
 // NewFileBuffer creats a new FileBuffer object
@@ -26,6 +33,7 @@ func NewFileBuffer(in []string) *FileBuffer {
 		buffer: in,
 		file:   []int{},
 		dirty:  false,
+		mod:    false,
 		addr:   0,
 		marks:  make(map[byte]int),
 	}
@@ -106,7 +114,7 @@ func (f *FileBuffer) Delete(r [2]int) (e error) {
 			}
 		}
 	}
-	f.dirty = true
+	f.Touch()
 	f.addr = r[0] + 1
 	if f.OOB(f.addr) {
 		f.addr = 0
@@ -129,7 +137,7 @@ func (f *FileBuffer) Insert(line int, nlines []string) (e error) {
 		nf = append(nf, i)
 	}
 	f.file = append(f.file[:line], append(nf, f.file[line:]...)...)
-	f.dirty = true
+	f.Touch()
 	f.addr = line + len(nlines) - 1
 	return
 }
@@ -161,6 +169,9 @@ func (f *FileBuffer) SetAddr(i int) (e error) {
 // Clean resets the dirty flag
 func (f *FileBuffer) Clean() {
 	f.dirty = false
+	f.lastDirty = false
+	f.lastFile = []int{}
+	f.lastAddr = 0
 }
 
 // FileToBuffer reads a file and creates a new FileBuffer from it
@@ -222,4 +233,38 @@ func (f *FileBuffer) ReadFile(line int, file string) (e error) {
 	}
 	e = f.Insert(line, b)
 	return
+}
+
+// Start a transaction
+func (f *FileBuffer) Start() {
+	f.mod = false
+	f.tmpFile = make([]int, len(f.file))
+	copy(f.tmpFile, f.file)
+	f.tmpAddr = f.addr
+	f.tmpDirty = f.dirty
+}
+
+// End a transaction
+func (f *FileBuffer) End() {
+	if f.mod {
+		f.lastFile = f.tmpFile
+		f.lastAddr = f.tmpAddr
+		f.lastDirty = f.tmpDirty
+	}
+}
+
+// Rewind restores the previous file
+func (f *FileBuffer) Rewind() {
+	if f.Dirty() || f.lastDirty {
+		f.addr = f.lastAddr
+		f.file = f.lastFile
+		f.dirty = f.lastDirty
+		f.mod = true
+	}
+}
+
+// Touch is the correct way (even internally) to set the dirty & modified bits
+func (f *FileBuffer) Touch() {
+	f.dirty = true
+	f.mod = true
 }
