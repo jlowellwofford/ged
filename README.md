@@ -33,12 +33,12 @@ The following has been implemented:
   - x
   - P
   - s
+  - u
 
 The following has *not* yet been implemented:
 - Unimplemented commands:
   - g
   - G
-  - u
   - v
   - V
   - z
