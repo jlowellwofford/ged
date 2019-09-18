@@ -3,7 +3,9 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"strconv"
@@ -252,9 +254,13 @@ func cmdMark(ctx *Context) (e error) {
 
 func cmdEdit(ctx *Context) (e error) {
 	var addr int
-	addr, e = buffer.AddrValue(ctx.addrs)
-	if e != nil {
-		return
+	// we do this manually because we allow addr 0
+	if len(ctx.addrs) == 0 {
+		return ErrINV
+	}
+	addr = ctx.addrs[len(ctx.addrs)-1]
+	if addr != 0 && buffer.OOB(addr) {
+		return ErrOOB
 	}
 	// cmd or filename?
 	cmd := ctx.cmd[ctx.cmdOffset]
@@ -267,28 +273,40 @@ func cmdEdit(ctx *Context) (e error) {
 	}
 	filename := ctx.cmd[ctx.cmdOffset+1:]
 	filename = filename[wsOffset(filename):]
-	if filename[0] == '!' { // command, not filename
-		// TODO
-		return fmt.Errorf("command execution is not yet supported")
-	} // filename
+	var fh io.Reader
 	if len(filename) == 0 {
 		filename = state.fileName
 	}
-	// try to read in the file
-	if _, e = os.Stat(filename); os.IsNotExist(e) && !*fSuppress {
-		return fmt.Errorf("%s: No such file or directory", filename)
-		// this is not fatal, we just start with an empty buffer
+	if filename[0] == '!' { // command, not filename
+		s := System{
+			Cmd:    filename[1:],
+			Stdout: bytes.NewBuffer(nil),
+			Stdin:  os.Stdin,
+			Stderr: os.Stderr,
+		}
+		if e = s.Run(); e != nil {
+			return
+		}
+		fh = s.Stdout.(io.Reader)
+	} else { // filename
+		if _, e = os.Stat(filename); os.IsNotExist(e) && !*fSuppress {
+			return fmt.Errorf("%s: No such file or directory", filename)
+			// this is not fatal, we just start with an empty buffer
+		}
+		if fh, e = os.Open(filename); e != nil {
+			e = fmt.Errorf("could not read file: %v", e)
+			return
+		}
+		state.fileName = filename
 	}
-	if cmd != 'r' {
-		if buffer, e = FileToBuffer(filename); e != nil {
-			fmt.Fprintln(os.Stderr, e)
-			os.Exit(1)
+
+	if cmd != 'r' { // other commands replace
+		buffer = NewFileBuffer(nil)
+		if e = buffer.Read(0, fh); e != nil {
+			return
 		}
 	} else {
-		e = buffer.ReadFile(addr, filename)
-		if len(state.fileName) == 0 {
-			state.fileName = filename
-		}
+		e = buffer.Read(addr, fh)
 	}
 	if !*fSuppress {
 		fmt.Println(buffer.Size())
