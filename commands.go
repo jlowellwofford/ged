@@ -213,11 +213,24 @@ func cmdWrite(ctx *Context) (e error) {
 		return
 	}
 	if run {
-		return fmt.Errorf("sending to stdin not yet supported")
+		s := System{
+			Cmd:    m[0][3],
+			Stdin:  bytes.NewBuffer(nil),
+			Stdout: os.Stdout,
+			Stderr: os.Stderr,
+		}
+		go func() {
+			for _, str := range lstr {
+				if _, e = fmt.Fprintf(s.Stdin.(*bytes.Buffer), "%s\n", str); e != nil {
+					return
+				}
+			}
+		}()
+		return s.Run()
 	}
+
 	var f *os.File
 	oFlag := os.O_TRUNC
-
 	if ctx.cmd[ctx.cmdOffset] == 'W' {
 		oFlag = os.O_APPEND
 	}
@@ -225,6 +238,7 @@ func cmdWrite(ctx *Context) (e error) {
 		return e
 	}
 	defer f.Close()
+
 	for _, s := range lstr {
 		_, e = fmt.Fprintf(f, "%s\n", s)
 		if e != nil {

@@ -37,5 +37,3 @@ The following has been implemented:
 
 The following has *not* yet been implemented:
 - Unimplemented commands: g, G, v, V
-
-- Commands that should interpret ! but don't: w
