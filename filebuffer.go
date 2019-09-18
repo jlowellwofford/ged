@@ -4,6 +4,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 )
 
@@ -217,21 +218,27 @@ func (f *FileBuffer) Size() (s int) {
 	return
 }
 
+// Read reads in from an io.Reader interface and inserts at the current line address
+func (f *FileBuffer) Read(line int, r io.Reader) (e error) {
+	b := []string{}
+	s := bufio.NewScanner(r)
+	for s.Scan() {
+		b = append(b, s.Text())
+	}
+	e = f.Insert(line, b)
+	return
+}
+
 // ReadFile reads in a file and inserts it at the current line address
 func (f *FileBuffer) ReadFile(line int, file string) (e error) {
 	var fh *os.File
-	b := []string{}
 	if fh, e = os.Open(file); e != nil {
 		e = fmt.Errorf("could not read file: %v", e)
 		return
 	}
 	defer fh.Close()
 
-	s := bufio.NewScanner(fh)
-	for s.Scan() {
-		b = append(b, s.Text())
-	}
-	e = f.Insert(line, b)
+	f.Read(line, fh)
 	return
 }
 
