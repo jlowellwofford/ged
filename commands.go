@@ -5,7 +5,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
@@ -582,23 +581,16 @@ func cmdDump(ctx *Context) (e error) {
 var rxCmdSub = regexp.MustCompile("%")
 
 func cmdCommand(ctx *Context) (e error) {
-	cmdStr := ctx.cmd[ctx.cmdOffset+1:]
-	cmdStrSane := rxSanitize.ReplaceAllString(cmdStr, "..")
-	idx := rxCmdSub.FindAllStringIndex(cmdStrSane, -1)
-	fCmd := ""
-	oCmd := 0
-	for _, m := range idx {
-		fCmd += cmdStr[oCmd:m[0]]
-		fCmd += state.fileName
-		oCmd = m[1]
+	s := System{
+		Cmd:    ctx.cmd[ctx.cmdOffset+1:],
+		Stdin:  os.Stdin,
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
 	}
-	fCmd += cmdStr[oCmd:]
-
-	cmd := exec.Command(shellpath, shellopts, fCmd)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
+	e = s.Run()
+	if e != nil {
+		return
+	}
 	fmt.Println("!")
 	return
 }

@@ -14,11 +14,6 @@ var (
 	fPrompt   = flag.String("p", "*", "specify a command prompt")
 )
 
-const (
-	shellpath = "/bin/sh"
-	shellopts = "-c"
-)
-
 // current FileBuffer
 var buffer *FileBuffer
 
