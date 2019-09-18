@@ -29,6 +29,8 @@ var state struct {
 	printErr bool
 	prompt   bool
 	winSize  int
+	lastRep  string
+	lastSub  string
 }
 
 // Parse input and run command

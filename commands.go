@@ -419,11 +419,19 @@ func cmdPrompt(ctx *Context) (e error) {
 
 var rxSanitize = regexp.MustCompile("\\\\.")
 var rxBackrefSanitize = regexp.MustCompile("\\\\\\\\")
-var rxBackref = regexp.MustCompile("\\\\([0-9]+)")
+var rxBackref = regexp.MustCompile("\\\\([0-9]+)|&")
+var rxSubArgs = regexp.MustCompile("g|l|n|p|\\d+")
 
 // FIXME: this is probably more convoluted than it needs to be
 func cmdSub(ctx *Context) (e error) {
 	cmd := ctx.cmd[ctx.cmdOffset+1:]
+	if len(cmd) == 0 {
+		if len(state.lastSub) == 0 {
+			return fmt.Errorf("invalid substitution")
+		}
+		cmd = state.lastSub
+	}
+	state.lastSub = cmd
 	del := cmd[0]
 	switch del {
 	case ' ':
@@ -449,6 +457,34 @@ func cmdSub(ctx *Context) (e error) {
 
 	mat := cmd[1:idx[0]]
 	rep := cmd[idx[0]+1 : idx[1]]
+	if rep == "%" {
+		rep = state.lastRep
+	}
+	state.lastRep = rep
+	arg := cmd[idx[1]+1:]
+
+	// arg processing
+	var count = 1
+	var printP, printL, printN, global bool
+
+	parsedArgs := rxSubArgs.FindAllStringSubmatch(arg, -1)
+	for _, m := range parsedArgs {
+		switch m[0] {
+		case "g":
+			global = true
+		case "p":
+			printP = true
+		case "l":
+			printL = true
+		case "n":
+			printN = true
+		default:
+			if count, e = strconv.Atoi(m[0]); e != nil || count < 1 {
+				return fmt.Errorf("invalid substitution argument")
+			}
+		}
+	}
+
 	repSane := rxBackrefSanitize.ReplaceAllString(rep, "  ")
 	refs := rxBackref.FindAllStringSubmatchIndex(repSane, -1)
 
@@ -463,6 +499,7 @@ func cmdSub(ctx *Context) (e error) {
 	}
 
 	last := ""
+	lastN := 0
 	nMatch := 0
 	b, _ := buffer.Get(r)
 	// we have to do things a bit manually because we we only have ReplaceAll, and we don't necessarily want that
@@ -470,6 +507,13 @@ func cmdSub(ctx *Context) (e error) {
 		matches := rx.FindAllStringSubmatchIndex(l, -1)
 		if !(len(matches) > 0) {
 			continue // skip the rest if we don't have matches
+		}
+		if !global {
+			if len(matches) >= count {
+				matches = [][]int{matches[count-1]}
+			} else {
+				matches = [][]int{}
+			}
 		}
 		// we have matches, deal with them
 		fLin := ""
@@ -483,13 +527,19 @@ func cmdSub(ctx *Context) (e error) {
 			oRep := 0
 			fRep := ""
 			for _, r := range refs {
-				i, _ := strconv.Atoi(rep[r[2]:r[3]])
-				if i > len(m)/2-1 { // not enough submatches for backref
-					return fmt.Errorf("invalid backref")
+				if rep[r[0]:r[1]] == "&" {
+					fRep += rep[oRep:r[0]]
+					fRep += l[m[0]:m[1]]
+					oRep = r[1]
+				} else {
+					i, _ := strconv.Atoi(rep[r[2]:r[3]])
+					if i > len(m)/2-1 { // not enough submatches for backref
+						return fmt.Errorf("invalid backref")
+					}
+					fRep += rep[oRep:r[0]]
+					fRep += l[m[2*i]:m[2*i+1]]
+					oRep = r[1]
 				}
-				fRep += rep[oRep:r[0]]
-				fRep += l[m[2*i]:m[2*i+1]]
-				oRep = r[1]
 			}
 			fRep += rep[oRep:]
 
@@ -501,11 +551,21 @@ func cmdSub(ctx *Context) (e error) {
 		buffer.Delete([2]int{ln, ln})
 		buffer.Insert(ln, []string{fLin})
 		last = fLin
+		lastN = ln
 	}
 	if nMatch == 0 {
 		e = fmt.Errorf("no match")
+	} else {
+		if printP {
+			fmt.Println(last)
+		}
+		if printL {
+			fmt.Println(last + "$")
+		}
+		if printN {
+			fmt.Printf("%d\t%s\n", lastN+1, last)
+		}
 	}
-	fmt.Println(last)
 	return
 }
 
