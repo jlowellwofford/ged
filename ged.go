@@ -11,7 +11,7 @@ import (
 // flags
 var (
 	fSuppress = flag.Bool("s", false, "suppress counts")
-	fPrompt   = flag.String("p", "", "specify a command prompt")
+	fPrompt   = flag.String("p", "*", "specify a command prompt")
 )
 
 const (
@@ -63,9 +63,11 @@ func main() {
 		flag.PrintDefaults()
 	}
 	flag.Parse()
-	if len(*fPrompt) > 0 {
-		state.prompt = true
-	}
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == "p" {
+			state.prompt = true
+		}
+	})
 	args := flag.Args()
 	if len(args) > 1 { // we only accept one additional argument
 		flag.Usage()
