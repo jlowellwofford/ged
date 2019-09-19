@@ -30,10 +30,13 @@ There are a few known differences:
 - `ged` uses `go`'s `regexp` package, and as such may have a somewhat different regular expression syntax.  Note, however, that backreferences follow the `ed` syntax of `\<ref>`, not the `go` syntax of `$<ref>`.
 - there has been little/no attempt to make particulars like error messages match `GNU Ed`. 
 - rather than being an error, the 'g' option for 's' simply overrides any specified count.
+- does not support "traditional" mode
 
 The following has been implemented:
 - Full line address parsing (including RE and markings)
 - Implmented commands: !, #, =, E, H, P, Q, W, a, c, d, e, f, h, i, j, k, l, m, n, p, q, r, s, t, u, w, x, y, z
 
-The following has *not* yet been implemented:
+The following has *not* yet been implemented, but will be eventually:
 - Unimplemented commands: g, G, v, V
+- does not (yet) support "loose" mode
+- does not (yet) support "restricted" mode

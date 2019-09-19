@@ -12,6 +12,8 @@ import (
 var (
 	fSuppress = flag.Bool("s", false, "suppress counts")
 	fPrompt   = flag.String("p", "*", "specify a command prompt")
+	fLoose    = flag.Bool("l", false, "loose exit mode, don't return errors for command failure (not implemented)")
+	fRestrict = flag.Bool("r", false, "no editing outside directory, no command exec (not implemented)")
 )
 
 // current FileBuffer
